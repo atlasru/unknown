@@ -54,6 +54,7 @@ CREATE INDEX IF NOT EXISTS artifacts_case ON artifacts(case_id);
 CREATE INDEX IF NOT EXISTS occurrences_entity ON occurrences(entity_id);
 CREATE INDEX IF NOT EXISTS occurrences_artifact ON occurrences(artifact_id);
 CREATE INDEX IF NOT EXISTS events_time ON events(timestamp);
+CREATE INDEX IF NOT EXISTS events_source ON events(artifact_id,line);
 CREATE INDEX IF NOT EXISTS edges_case ON edges(case_id);
 CREATE INDEX IF NOT EXISTS audit_case ON audit(case_id,seq);
 PRAGMA user_version=1;
@@ -288,10 +289,21 @@ class Store:
         artifacts = self.artifacts(case_id, limit=min(limit, 1000))["items"]
         nodes = [{"id": a["id"], "label": a["name"], "kind": "artifact", "weight": a["mentions"], "findings": a["findings"]} for a in artifacts]
         nodes += [{"id": e["id"], "label": e["value"], "kind": e["kind"], "weight": e["mentions"], "sources": e["sources"]} for e in entities]
+        temporal_artifacts = {r["artifact_id"]: r for r in self.rows("SELECT e.artifact_id,min(e.timestamp) AS first_seen,max(e.timestamp) AS last_seen FROM events e JOIN artifacts a ON a.id=e.artifact_id WHERE a.case_id=? GROUP BY e.artifact_id", (case_id,))}
+        temporal_entities = {r["entity_id"]: r for r in self.rows("SELECT o.entity_id,min(ev.timestamp) AS first_seen,max(ev.timestamp) AS last_seen FROM occurrences o JOIN events ev ON ev.artifact_id=o.artifact_id AND ev.line=o.line JOIN entities en ON en.id=o.entity_id WHERE en.case_id=? GROUP BY o.entity_id", (case_id,))}
+        for node in nodes:
+            temporal = (temporal_artifacts if node["kind"] == "artifact" else temporal_entities).get(node["id"])
+            node["first_seen"] = temporal["first_seen"] if temporal else None
+            node["last_seen"] = temporal["last_seen"] if temporal else None
         ids = {n["id"] for n in nodes}
         edges = [e for e in self.rows("SELECT source,target,relation,count(*) AS weight,min(artifact_id) AS artifact_id,min(line) AS line FROM edges WHERE case_id=? GROUP BY source,target,relation", (case_id,)) if e["source"] in ids and e["target"] in ids]
+        edge_times = {(r["source"], r["target"], r["relation"]): r["first_seen"] for r in self.rows("SELECT ed.source,ed.target,ed.relation,min(ev.timestamp) AS first_seen FROM edges ed JOIN events ev ON ev.artifact_id=ed.artifact_id AND (ev.line=ed.line OR ed.line=0) WHERE ed.case_id=? GROUP BY ed.source,ed.target,ed.relation", (case_id,))}
+        # Untimed evidence is always present in replay. It does not acquire an invented timestamp.
+        for edge in edges:
+            edge["first_seen"] = edge_times.get((edge["source"], edge["target"], edge["relation"]))
         counts = self.rows("SELECT (SELECT count(*) FROM artifacts WHERE case_id=?) + (SELECT count(*) FROM entities WHERE case_id=?) AS n", (case_id, case_id))[0]["n"]
-        return {"nodes": nodes, "edges": edges, "total": counts, "truncated": counts > len(nodes)}
+        timestamps = [r["first_seen"] for r in temporal_artifacts.values()] + [r["last_seen"] for r in temporal_artifacts.values()]
+        return {"nodes": nodes, "edges": edges, "total": counts, "truncated": counts > len(nodes), "time_range": [min(timestamps), max(timestamps)] if timestamps else None}
 
     def path(self, case_id, source, target):
         # Shortest path in the complete stored graph, not just the display subset.
@@ -380,7 +392,15 @@ class Store:
             if not valid:
                 failures.append({"type": "evidence", "id": artifact["id"]})
         # Check the database evidence records against the hash-chained import records.
-        imported = {json.loads(r["payload"])["id"]: json.loads(r["payload"]) for r in records if r["action"] == "evidence.imported"}
+        imported = {}
+        for record in records:
+            if record["action"] != "evidence.imported":
+                continue
+            try:
+                payload = json.loads(record["payload"])
+                imported[payload["id"]] = payload
+            except (ValueError, TypeError, KeyError):
+                failures.append({"type": "audit_payload", "seq": record["seq"]})
         for artifact in self.rows("SELECT id,name,path,sha256,size,parent_id,relation FROM artifacts WHERE case_id=?", (case_id,)):
             if artifact != imported.get(artifact["id"]):
                 failures.append({"type": "record", "id": artifact["id"]})
@@ -404,6 +424,8 @@ class Store:
         with self.lock:
             self.case(case_id)
             manifest = {"format": "atlas-evidence-bundle", "version": 1, "exported": now(), "case": self.case(case_id), "integrity": self.verify(case_id)}
+            if not manifest["integrity"]["ok"]:
+                raise ValueError("Integrity verification failed. Repair the workspace before exporting.")
             for table in ("artifacts", "entities", "edges", "notes", "audit"):
                 manifest[table] = self.rows(f"SELECT * FROM {table} WHERE case_id=?", (case_id,))
             for table in ("occurrences", "events", "findings"):

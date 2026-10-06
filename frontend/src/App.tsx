@@ -32,6 +32,7 @@ export function App() {
 
   useEffect(() => {
     window.atlas.api<Case[]>('/cases').then(items => { setCases(items); const saved = localStorage.getItem('atlas-case'); setCaseId(items.find(c => c.id === saved)?.id || items[0]?.id || ''); }).catch(e => onError(e.message));
+    window.atlas.api<Job[]>('/jobs').then(jobs => { for (const existing of jobs) if (existing.status !== 'running') completedJobs.current.add(existing.id); }).catch(() => {});
     return window.atlas.onEngineStopped(() => setEngineStopped(true));
   }, [onError]);
   useEffect(() => { if (caseId) localStorage.setItem('atlas-case', caseId); setSelection(null); }, [caseId]);

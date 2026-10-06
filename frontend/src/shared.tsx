@@ -4,14 +4,14 @@ import type { Kind } from './types';
 import { COLORS, KIND_LABELS } from './Graph';
 
 export function useData<T>(path: string, revision: number, onError: (s: string) => void) {
-  const [data, setData] = useState<T | null>(null), [loading, setLoading] = useState(true);
+  const [resolved, setResolved] = useState<{ path: string; value: T } | null>(null), [loading, setLoading] = useState(true);
   useEffect(() => {
     let live = true;
     setLoading(true);
-    window.atlas.api<T>(path).then(value => { if (live) setData(value); }).catch(error => { if (live) { setData(null); onError(error.message); } }).finally(() => { if (live) setLoading(false); });
+    window.atlas.api<T>(path).then(value => { if (live) setResolved({ path, value }); }).catch(error => { if (live) { setResolved(null); onError(error.message); } }).finally(() => { if (live) setLoading(false); });
     return () => { live = false; };
   }, [path, revision, onError]);
-  return { data, loading };
+  return { data: resolved?.path === path ? resolved.value : null, loading };
 }
 export const bytes = (n: number) => n < 1024 ? `${n} B` : n < 1048576 ? `${(n / 1024).toFixed(1)} KB` : `${(n / 1048576).toFixed(1)} MB`;
 export const date = (s: string) => new Date(s).toLocaleString('en-GB', { timeZone: 'UTC', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit' });

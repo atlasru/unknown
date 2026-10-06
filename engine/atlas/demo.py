@@ -19,6 +19,10 @@ def generate(folder):
         {"timestamp": (base + timedelta(minutes=4)).isoformat(), "event": "process", "command": "lsass.exe credential access attempt blocked by EDR"},
     ]) + "\n", encoding="utf-8")
     network = []
+    # Ordinary adjacent activity provides comparison clusters without claiming it is malicious.
+    for i, domain in enumerate(["identity.northstar.example", "updates.os.example", "status.northstar.example", "api.workspace.example", "metrics.northstar.example", "files.northstar.example", "support.northstar.example", "assets.northstar.example"]):
+        network.append({"timestamp": (base - timedelta(minutes=4) + timedelta(seconds=i * 19)).isoformat(), "event": "dns",
+                        "host": "WS-OPS-02", "src_ip": "10.20.8.20", "query": domain, "answer": f"203.0.113.{80 + i}", "context": "ordinary adjacent activity"})
     for i in range(36):
         timestamp = (base + timedelta(seconds=25 + i * 30)).isoformat()
         network.append({"timestamp": timestamp, "event": "dns", "src_ip": "10.20.8.17", "query": "cdn.northstar.example", "answer": "203.0.113.42", "bytes": 218 + i % 4})

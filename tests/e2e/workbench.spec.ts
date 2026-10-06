@@ -9,6 +9,7 @@ test('complete investigation: graph, provenance, query, timeline, review, notes,
   fs.writeFileSync(source, '2026-10-06T09:00:00Z connect https://e2e.example/path 192.0.2.77\n');
   const launch = () => electron.launch({ args: [path.resolve('.'), ...(process.platform === 'linux' ? ['--no-sandbox'] : [])], env: { ...process.env, ATLAS_TEST: '1', ATLAS_DATA_DIR: path.join(folder, 'workspace'), ATLAS_TEST_IMPORT: source, ATLAS_TEST_EXPORT: exported }, timeout: 60000 });
   let app = await launch();
+  try {
   let page = await app.firstWindow();
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
@@ -20,6 +21,12 @@ test('complete investigation: graph, provenance, query, timeline, review, notes,
 
   await nav('Evidence graph');
   await expect(page.getByText('Layout ready', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Event replay', exact: true }).click();
+  await expect(page.getByLabel('Replay timestamp')).toBeVisible();
+  await page.getByLabel('Play replay').click();
+  await expect(page.getByLabel('Pause replay')).toBeVisible();
+  await page.getByLabel('Pause replay').click();
+  await page.getByRole('button', { name: 'Event replay', exact: true }).click();
   const option = page.getByLabel('Select graph node').locator('option').filter({ hasText: /^cdn\.northstar\.example$/ });
   await page.getByLabel('Select graph node').selectOption(await option.getAttribute('value') as string);
   await expect(page.getByLabel('Evidence inspector')).toBeVisible();
@@ -83,4 +90,5 @@ test('complete investigation: graph, provenance, query, timeline, review, notes,
   await page.locator('.sidebar nav').getByRole('button', { name: 'Analyst notebook', exact: false }).click();
   await expect(page.locator('.notes-grid')).toContainText('E2E conclusion');
   await app.close();
+  } finally { await app.close().catch(() => {}); }
 });

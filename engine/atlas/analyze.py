@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import base64
 import collections
+import csv
 import hashlib
 import io
 import ipaddress
@@ -77,7 +78,7 @@ def canonical(kind: str, value: str) -> str | None:
     return value.upper() if kind == "cve" else value.lower()
 
 
-def extract(text: str) -> list[dict]:
+def extract(text: str, delimiter: str | None = None) -> list[dict]:
     occurrences = []
     # Precompute line starts once; avoid O(matches * text length).
     import bisect
@@ -85,7 +86,13 @@ def extract(text: str) -> list[dict]:
     seen = set()
     for kind, pattern in PATTERNS:
         for match in pattern.finditer(text):
-            value = canonical(kind, match.group())
+            candidate = match.group()
+            if kind == "url" and delimiter:
+                line_start = text.rfind("\n", 0, match.start()) + 1
+                # CSV delimiters terminate unquoted values; commas inside quoted URLs remain valid.
+                if text[line_start:match.start()].count('"') % 2 == 0:
+                    candidate = candidate.split(delimiter, 1)[0]
+            value = canonical(kind, candidate)
             if value is None:
                 continue
             key = (kind, value, match.start())
@@ -150,7 +157,12 @@ def analyze(data: bytes, name: str) -> dict:
     ext = PurePosixPath(name.replace("\\", "/")).suffix.lower().lstrip(".") or "file"
     findings = []
     children = []
-    if data.startswith(b"%PDF-"):
+    if data.startswith(b"PK\x03\x04"):
+        import zipfile
+        with zipfile.ZipFile(io.BytesIO(data)) as archive:
+            metadata.update({"format": "ZIP", "entries": len(archive.infolist())})
+        text, encoding = "", "zip-container"
+    elif data.startswith(b"%PDF-"):
         from pypdf import PdfReader
         reader = PdfReader(io.BytesIO(data), strict=False)
         if reader.is_encrypted and not reader.decrypt(""):
@@ -193,7 +205,13 @@ def analyze(data: bytes, name: str) -> dict:
                              "relation": "decoded", "origin_line": text.count("\n", 0, match.start()) + 1})
         except (ValueError, UnicodeError):
             pass
-    occurrences = extract(text)
+    delimiter = None
+    if ext == "csv":
+        try:
+            delimiter = csv.Sniffer().sniff(text[:8192], delimiters=",;\t").delimiter
+        except csv.Error:
+            delimiter = ","
+    occurrences = extract(text, delimiter)
     events = []
     for lineno, line in enumerate(text.splitlines(), 1):
         match = TIMESTAMP.search(line)
@@ -220,10 +238,12 @@ def analyze(data: bytes, name: str) -> dict:
         host = urlsplit(occurrence["value"]).hostname if occurrence["kind"] == "url" else occurrence["value"].split("@")[-1]
         if host:
             kind = "ip" if canonical("ip", host) else "domain"
-            occurrences.append({**occurrence, "kind": kind, "value": host})
+            occurrences.append({**occurrence, "kind": kind, "value": host,
+                                "offset": occurrence["offset"] + max(0, occurrence["value"].find(host))})
             relations.append({"source_kind": occurrence["kind"], "source_value": occurrence["value"], "target_kind": kind,
                               "target_value": host, "relation": "hosted_on" if occurrence["kind"] == "url" else "mail_domain", "line": occurrence["line"]})
     # Structured JSONL DNS / network records: no speculative cross-file edges.
+    observed = {(o["kind"], o["value"], o["line"]) for o in occurrences}
     for lineno, line in enumerate(text.splitlines(), 1):
         if not line.lstrip().startswith("{"):
             continue
@@ -235,9 +255,12 @@ def analyze(data: bytes, name: str) -> dict:
             address = record.get("answer") or record.get("dst_ip")
             if isinstance(domain, str) and isinstance(address, str) and canonical("ip", address):
                 domain = canonical("domain", domain)
+                address = canonical("ip", address)
                 if domain:
-                    occurrences.extend([{"kind": "domain", "value": domain, "line": lineno, "offset": 0, "excerpt": line[:400]},
-                                        {"kind": "ip", "value": address, "line": lineno, "offset": 0, "excerpt": line[:400]}])
+                    for kind, value in (("domain", domain), ("ip", address)):
+                        if (kind, value, lineno) not in observed:
+                            occurrences.append({"kind": kind, "value": value, "line": lineno, "offset": 0, "excerpt": line[:400]})
+                            observed.add((kind, value, lineno))
                     relations.append({"source_kind": "domain", "source_value": domain, "target_kind": "ip", "target_value": address, "relation": "resolves_to", "line": lineno})
         except (ValueError, TypeError):
             pass

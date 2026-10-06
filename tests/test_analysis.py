@@ -102,3 +102,21 @@ def test_pdf_text():
 def test_occurrence_limit_and_late_line_extraction():
     text = "192.0.2.1\n" * 25000
     assert len(extract(text)) == 20000
+
+def test_dns_mentions_not_double_counted():
+    result = analyze(json.dumps({'query':'dns.example','answer':'192.0.2.1'}).encode(), 'dns.jsonl')
+    assert len([o for o in result['occurrences'] if o['kind'] == 'domain']) == 1
+    assert len([o for o in result['occurrences'] if o['kind'] == 'ip']) == 1
+
+def test_csv_urls_stop_at_column_boundaries_and_preserve_quoted_commas():
+    text = 'time,url,status\n2026-10-06T08:00:00Z,https://a.example/path,200\n2026-10-06T08:00:01Z,"https://b.example/path?a=one,two",200'
+    urls = [o['value'] for o in analyze(text.encode(), 'proxy.csv')['occurrences'] if o['kind'] == 'url']
+    assert urls == ['https://a.example/path', 'https://b.example/path?a=one,two']
+
+def test_archive_container_does_not_index_compressed_garbage():
+    import io,zipfile
+    buffer=io.BytesIO()
+    with zipfile.ZipFile(buffer,'w') as archive: archive.writestr('not-a-domain.txtpk', 'ignored')
+    result=analyze(buffer.getvalue(),'archive.zip')
+    assert result['occurrences'] == []
+    assert result['metadata']['format'] == 'ZIP'

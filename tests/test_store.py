@@ -100,3 +100,19 @@ def test_timeline_filter_order_and_timezone(store, case):
     assert store.events(case)['items'][0]['kind'] == 'auth'
     assert store.events(case, kind='network')['total'] == 1
     assert store.events(case, start='2026-10-06T08:00:02.000+00:00')['total'] == 1
+
+def test_graph_replay_uses_source_timestamps(store, case):
+    add(store, case, 'events.jsonl', '2026-10-06T08:00:00Z connect https://first.example/a\n2026-10-06T08:10:00Z connect https://later.example/b')
+    add(store, case, 'untimed.txt', 'Context: reviewer@notes.example')
+    graph = store.graph(case)
+    assert graph['time_range'] == ['2026-10-06T08:00:00.000+00:00', '2026-10-06T08:10:00.000+00:00']
+    node = next(n for n in graph['nodes'] if n['label'] == 'later.example')
+    assert node['first_seen'] == '2026-10-06T08:10:00.000+00:00'
+    untimed = next(n for n in graph['nodes'] if n['label'] == 'notes.example')
+    assert untimed['first_seen'] is None
+
+def test_malformed_audit_payload_returns_failure_and_export_blocks(store, case, tmp_path):
+    add(store, case, 'a.txt', 'bytes')
+    with store.db: store.db.execute("UPDATE audit SET payload='{' WHERE action='evidence.imported'")
+    assert not store.verify(case)['ok']
+    with pytest.raises(ValueError, match='Integrity verification failed'): store.export(case, tmp_path / 'bad.zip')

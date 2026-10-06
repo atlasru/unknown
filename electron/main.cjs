@@ -8,6 +8,7 @@ const { pathToFileURL } = require('node:url');
 protocol.registerSchemesAsPrivileged([{ scheme: 'atlas', privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true } }]);
 app.setName('Atlas');
 const isTest = process.env.ATLAS_TEST === '1';
+if (isTest && process.env.ATLAS_DATA_DIR) app.setPath('userData', path.join(process.env.ATLAS_DATA_DIR, 'desktop-test'));
 if (!isTest && !app.requestSingleInstanceLock()) app.quit();
 let window, engine, endpoint, stopping = false, engineReady = false;
 const token = randomBytes(32).toString('hex');
@@ -45,6 +46,7 @@ function startEngine() {
     const logDir = app.getPath('logs');
     fs.mkdirSync(logDir, { recursive: true });
     const log = fs.createWriteStream(path.join(logDir, 'engine.log'), { flags: 'a' });
+    log.write(`Starting Atlas engine: ${command}\n`);
     engine = spawn(command, args, { env: { ...process.env, ATLAS_API_TOKEN: token, PYTHONUNBUFFERED: '1' }, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
     const timeout = setTimeout(() => reject(new Error('Analysis engine did not start within 60 seconds')), 60000);
     let output = '';
@@ -53,6 +55,7 @@ function startEngine() {
       if (output.length > 100000) output = output.slice(-10000);
       for (let end; (end = output.indexOf('\n')) !== -1;) {
         const line = output.slice(0, end); output = output.slice(end + 1);
+        log.write(line + '\n');
         try {
           const message = JSON.parse(line);
           if (message.ready && Number.isInteger(message.port) && message.port > 0 && message.port < 65536) {
@@ -61,11 +64,11 @@ function startEngine() {
             clearTimeout(timeout);
             resolve();
           }
-        } catch { log.write(line + '\n'); }
+        } catch { /* Non-protocol lines are retained in the application log. */ }
       }
     });
     engine.stderr.on('data', chunk => log.write(chunk));
-    engine.on('error', error => { clearTimeout(timeout); reject(error); });
+    engine.on('error', error => { log.write(error.message + '\n'); clearTimeout(timeout); reject(error); });
     engine.on('exit', code => {
       clearTimeout(timeout); engineReady = false; log.end();
       if (!stopping) {
@@ -136,7 +139,8 @@ app.whenReady().then(async () => {
   });
   session.defaultSession.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
   session.defaultSession.setPermissionCheckHandler(() => false);
-  session.defaultSession.webRequest.onBeforeRequest((details, callback) => callback({ cancel: !details.url.startsWith('atlas://app/') && !details.url.startsWith('devtools://') }));
+  const localAssetPrefix = pathToFileURL(ui + path.sep).toString();
+  session.defaultSession.webRequest.onBeforeRequest((details, callback) => callback({ cancel: !details.url.startsWith('atlas://app/') && !details.url.startsWith(localAssetPrefix) && !details.url.startsWith('devtools://') }));
   registerIPC();
   try {
     await startEngine();
