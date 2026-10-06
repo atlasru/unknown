@@ -4,7 +4,7 @@ Atlas 1.0.0 uses behavioral tests and a complete desktop investigation scenario.
 
 ## Engine and API
 
-55 tests cover indicator normalization and source positions; UTF-8/UTF-16/binary strings; PDF text and parser failure; malformed PE headers and writable executable sections; encoded command derivation without execution; DNS relationship provenance; CSV column boundaries; timestamp normalization; FTS filters; changed-source versions; case isolation; notes/review persistence; restart; byte, record and audit tampering; escaped reports; export completeness; ZIP path traversal, expansion limits and nesting depth; symlinks; cancellation; import concurrency; network periodicity; authenticated HTTP boundaries; graph replay timestamps and full-range temporal aggregation.
+56 tests cover indicator normalization and source positions; UTF-8/UTF-16/binary strings; PDF text, background-child import and parser failure; malformed PE headers and writable executable sections; encoded command derivation without execution; DNS relationship provenance; CSV column boundaries; timestamp normalization; FTS filters; changed-source versions; case isolation; notes/review persistence; restart; byte, record and audit tampering; escaped reports; export completeness; ZIP path traversal, expansion limits and nesting depth; symlinks; cancellation; import concurrency; network periodicity; authenticated HTTP boundaries; graph replay timestamps and full-range temporal aggregation.
 
 Two Node tests exercise deterministic Barnes–Hut convergence, finite positions, pin/unpin behavior, empty/single-node layouts and missing-edge handling.
 

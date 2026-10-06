@@ -74,6 +74,27 @@ def test_parser_failure_preserves_original(store, case, tmp_path):
     assert store.blob(artifact['sha256']) == source.read_bytes()
     assert store.verify(case)['ok']
 
+def test_pdf_background_import_has_private_child_protocol(store, case, tmp_path):
+    from pypdf import PdfWriter
+    from pypdf.generic import DecodedStreamObject, DictionaryObject, NameObject
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=612, height=792)
+    font = DictionaryObject({NameObject('/Type'): NameObject('/Font'), NameObject('/Subtype'): NameObject('/Type1'), NameObject('/BaseFont'): NameObject('/Helvetica')})
+    page[NameObject('/Resources')] = DictionaryObject({NameObject('/Font'): DictionaryObject({NameObject('/F1'): writer._add_object(font)})})
+    stream = DecodedStreamObject(); stream.set_data(b'BT /F1 12 Tf 20 700 Td (Background PDF source: 192.0.2.5) Tj ET')
+    page[NameObject('/Contents')] = writer._add_object(stream)
+    source = tmp_path / 'background.pdf'
+    with source.open('wb') as target: writer.write(target)
+    job = run(store, case, [source])
+    assert job['imported'] == 1 and job['skipped'] == 0
+    artifact = store.artifacts(case)['items'][0]
+    detail = store.artifact(case, artifact['id'])
+    assert detail['metadata']['encoding'] == 'pdf-text'
+    assert '192.0.2.5' in detail['text']
+    assert len(store.entities(case, '192.0.2.5')) == 1
+    assert store.blob(artifact['sha256']) == source.read_bytes()
+    assert store.verify(case)['ok']
+
 def test_non_periodic_network_not_flagged(store, case, tmp_path):
     source = tmp_path / 'random.jsonl'
     source.write_text('\n'.join(json.dumps({'timestamp':f'2026-10-06T08:{minute:02d}:{seconds:02d}Z','event':'dns','query':'good.example','answer':'192.0.2.9'}) for minute, seconds in [(0,0),(0,8),(1,50),(2,9),(4,2),(8,50),(10,0)]))

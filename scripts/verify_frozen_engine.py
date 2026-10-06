@@ -59,7 +59,7 @@ def main():
             if job['status'] != 'completed' or job['imported'] != 1: raise ValueError(job)
             artifact = api(f'/cases/{case_id}/artifacts')['items'][0]
             detail = api(f'/cases/{case_id}/artifacts/{artifact["id"]}')
-            if detail['metadata']['encoding'] != 'pdf-text' or '192.0.2.5' not in detail['text']: raise ValueError(detail['metadata'])
+            if detail['metadata']['encoding'] != 'pdf-text' or '192.0.2.5' not in detail['text']: raise ValueError({'metadata':detail['metadata'], 'findings':detail['findings']})
             if artifact['sha256'] != hashlib.sha256(source.read_bytes()).hexdigest(): raise ValueError('Original PDF bytes were not preserved')
             if not api(f'/cases/{case_id}/verify', {})['ok']: raise ValueError('Frozen engine integrity check failed')
             print(json.dumps({'ok':True, 'frozen_pdf_subprocess':True, 'encoding':detail['metadata']['encoding'], 'original_sha256':artifact['sha256']}))

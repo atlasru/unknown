@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import io
-import multiprocessing
+import base64
+import json
 import os
 import statistics
+import subprocess
+import sys
 import threading
 import time
 import zipfile
@@ -18,39 +21,35 @@ MAX_JOB_BYTES = 512 * 1024 * 1024
 MAX_DEPTH = 3
 
 
-def pdf_worker(data, name, conn):
-    try:
-        if os.name != "nt":
-            import resource
-            resource.setrlimit(resource.RLIMIT_CPU, (15, 15))
-            resource.setrlimit(resource.RLIMIT_AS, (1536 * 1024 * 1024, 1536 * 1024 * 1024))
-        conn.send((True, analyze(data, name)))
-    except Exception as exc:
-        conn.send((False, str(exc)[:1000]))
-    finally:
-        conn.close()
-
-
 def isolated_analysis(data, name):
     if not data.startswith(b"%PDF-"):
         return analyze(data, name)
-    ctx = multiprocessing.get_context("spawn")
-    parent, child = ctx.Pipe(duplex=False)
-    process = ctx.Process(target=pdf_worker, args=(data, name, child), daemon=True)
-    process.start()
-    child.close()
+    command = [sys.executable]
+    if not getattr(sys, "frozen", False):
+        command.append(str(Path(__file__).resolve().parents[1] / "launch.py"))
+    command.append("--pdf-worker")
+    # communicate drains both streams while sending input. This avoids Windows
+    # multiprocessing handles and keeps the PDF child's stdin independent of
+    # the API engine's parent-lifetime pipe.
+    process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE, creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
     try:
-        if not parent.poll(25):
-            raise ValueError("PDF analysis exceeded 25 seconds")
-        ok, result = parent.recv()
-        if not ok:
-            raise ValueError("PDF analysis failed: " + result)
+        output, errors = process.communicate(data, timeout=25)
+        if process.returncode:
+            try:
+                message = json.loads(output).get("error", "PDF parser failed")
+            except (ValueError, AttributeError):
+                message = errors.decode("utf-8", "replace")[-1000:] or "PDF parser exited without a result"
+            raise ValueError("PDF analysis failed: " + str(message)[:1000])
+        result = json.loads(output)
+        for child in result["children"]:
+            child["data"] = base64.b64decode(child["data"], validate=True)
+        result["metadata"]["extension"] = PurePosixPath(name.replace("\\", "/")).suffix.lower().lstrip(".") or "file"
         return result
-    finally:
-        parent.close()
-        if process.is_alive():
-            process.terminate()
-        process.join(timeout=2)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.communicate()
+        raise ValueError("PDF analysis exceeded 25 seconds") from None
 
 
 class Importer:
