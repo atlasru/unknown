@@ -53,6 +53,8 @@ jobs:
         run: npm run test:e2e
       - name: Build and verify bundled analysis engine
         run: python scripts/build_engine.py
+      - name: Verify PDF parsing in the frozen child process
+        run: python scripts/verify_frozen_engine.py
       - name: Package desktop application
         run: npx electron-builder --publish never
       - name: Verify packaged application (Linux)

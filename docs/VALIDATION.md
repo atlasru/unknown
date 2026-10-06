@@ -24,6 +24,8 @@ Playwright drives the actual Electron application, first from source and then fr
 
 The packaged pass uses the private frozen engine, not the development Python interpreter. CI publishes binaries only after both platform jobs, including these packaged passes, succeed. Screenshots and failure traces are uploaded as workflow artifacts.
 
+An additional frozen-engine probe generates a valid PDF, imports it through the authenticated API, verifies text/indicator extraction in the isolated compiled child process, checks original byte preservation and verifies clean shutdown. It runs on both Windows and Linux after sidecar packaging.
+
 An exported bundle was also verified independently with `scripts/verify_bundle.py`.
 
 ## Measured corpus performance
