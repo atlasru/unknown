@@ -1,0 +1,13 @@
+node_modules/
+dist/
+release/
+build/
+*.egg-info/
+__pycache__/
+.pytest_cache/
+*.pyc
+.venv/
+test-results/
+playwright-report/
+.atlas/
+*.log
