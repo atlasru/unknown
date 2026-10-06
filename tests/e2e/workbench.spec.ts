@@ -7,7 +7,7 @@ test('complete investigation: graph, provenance, query, timeline, review, notes,
   const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'atlas-e2e-'));
   const source = path.join(folder, 'custom.log'), exported = path.join(folder, 'export.zip');
   fs.writeFileSync(source, '2026-10-06T09:00:00Z connect https://e2e.example/path 192.0.2.77\n');
-  const launch = () => electron.launch({ args: [path.resolve('.'), ...(process.platform === 'linux' ? ['--no-sandbox'] : [])], env: { ...process.env, ATLAS_TEST: '1', ATLAS_DATA_DIR: path.join(folder, 'workspace'), ATLAS_TEST_IMPORT: source, ATLAS_TEST_EXPORT: exported }, timeout: 60000 });
+  const launch = () => electron.launch({ executablePath: process.env.ATLAS_EXECUTABLE || undefined, args: [...(process.env.ATLAS_EXECUTABLE ? [] : [path.resolve('.')]), ...(process.platform === 'linux' ? ['--no-sandbox'] : [])], env: { ...process.env, ATLAS_TEST: '1', ATLAS_DATA_DIR: path.join(folder, 'workspace'), ATLAS_TEST_IMPORT: source, ATLAS_TEST_EXPORT: exported }, timeout: 60000 });
   let app = await launch();
   try {
   let page = await app.firstWindow();
@@ -60,7 +60,7 @@ test('complete investigation: graph, provenance, query, timeline, review, notes,
   await nav('Analyst notebook');
   await page.getByLabel('New analyst note').fill('E2E conclusion: infrastructure corroborated across independent files.');
   await page.getByRole('button', { name: 'Add note', exact: true }).click();
-  await expect(page.locator('.note-card')).toContainText('E2E conclusion');
+  await expect(page.locator('.notes-grid')).toContainText('E2E conclusion');
 
   await nav('Integrity & export');
   await page.getByRole('button', { name: 'Verify integrity' }).click();

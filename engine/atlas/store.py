@@ -56,6 +56,7 @@ CREATE INDEX IF NOT EXISTS occurrences_artifact ON occurrences(artifact_id);
 CREATE INDEX IF NOT EXISTS events_time ON events(timestamp);
 CREATE INDEX IF NOT EXISTS events_source ON events(artifact_id,line);
 CREATE INDEX IF NOT EXISTS edges_case ON edges(case_id);
+CREATE INDEX IF NOT EXISTS edges_source ON edges(artifact_id,line);
 CREATE INDEX IF NOT EXISTS audit_case ON audit(case_id,seq);
 PRAGMA user_version=1;
 """
@@ -201,9 +202,12 @@ class Store:
             counts["bytes"] = self.db.execute("SELECT coalesce(sum(size),0) FROM artifacts WHERE case_id=?", (case_id,)).fetchone()[0]
         severities = self.rows("SELECT severity, count(*) AS count FROM findings f JOIN artifacts a ON a.id=f.artifact_id WHERE a.case_id=? AND status='open' GROUP BY severity", (case_id,))
         types = self.rows("SELECT kind, count(*) AS count FROM entities WHERE case_id=? GROUP BY kind ORDER BY count DESC", (case_id,))
-        bins = self.rows("SELECT substr(timestamp,1,16) AS time,count(*) AS count FROM events e JOIN artifacts a ON a.id=e.artifact_id WHERE a.case_id=? GROUP BY time ORDER BY time LIMIT 300", (case_id,))
+        bounds = self.rows("SELECT min(cast(strftime('%s',timestamp) AS INTEGER)) AS start,max(cast(strftime('%s',timestamp) AS INTEGER)) AS end FROM events e JOIN artifacts a ON a.id=e.artifact_id WHERE a.case_id=?", (case_id,))[0]
+        import math
+        bucket_seconds = max(60, math.ceil(((bounds["end"] or 0) - (bounds["start"] or 0) + 60) / (300 * 60)) * 60)
+        bins = self.rows("SELECT strftime('%Y-%m-%dT%H:%M',(cast(strftime('%s',timestamp) AS INTEGER)/?)*?,'unixepoch') AS time,count(*) AS count FROM events e JOIN artifacts a ON a.id=e.artifact_id WHERE a.case_id=? GROUP BY time ORDER BY time", (bucket_seconds, bucket_seconds, case_id))
         hubs = self.rows("SELECT e.*,count(DISTINCT o.artifact_id) AS sources,count(o.id) AS mentions FROM entities e JOIN occurrences o ON o.entity_id=e.id WHERE e.case_id=? GROUP BY e.id ORDER BY sources DESC,mentions DESC LIMIT 8", (case_id,))
-        return {"case": case, "counts": counts, "severities": severities, "types": types, "timeline": bins, "hubs": hubs}
+        return {"case": case, "counts": counts, "severities": severities, "types": types, "timeline": bins, "bucket_seconds": bucket_seconds, "hubs": hubs}
 
     def artifacts(self, case_id, query="", limit=500, offset=0):
         conditions = ["a.case_id=?"]
@@ -296,8 +300,12 @@ class Store:
             node["first_seen"] = temporal["first_seen"] if temporal else None
             node["last_seen"] = temporal["last_seen"] if temporal else None
         ids = {n["id"] for n in nodes}
-        edges = [e for e in self.rows("SELECT source,target,relation,count(*) AS weight,min(artifact_id) AS artifact_id,min(line) AS line FROM edges WHERE case_id=? GROUP BY source,target,relation", (case_id,)) if e["source"] in ids and e["target"] in ids]
-        edge_times = {(r["source"], r["target"], r["relation"]): r["first_seen"] for r in self.rows("SELECT ed.source,ed.target,ed.relation,min(ev.timestamp) AS first_seen FROM edges ed JOIN events ev ON ev.artifact_id=ed.artifact_id AND (ev.line=ed.line OR ed.line=0) WHERE ed.case_id=? GROUP BY ed.source,ed.target,ed.relation", (case_id,))}
+        placeholders = ",".join("?" for _ in ids) or "NULL"
+        node_args = [case_id, *ids, *ids]
+        edges = self.rows(f"SELECT source,target,relation,count(*) AS weight,min(artifact_id) AS artifact_id,min(line) AS line FROM edges WHERE case_id=? AND source IN({placeholders}) AND target IN({placeholders}) GROUP BY source,target,relation", node_args)
+        edge_times = {(r["source"], r["target"], r["relation"]): r["first_seen"] for r in self.rows(f"SELECT ed.source,ed.target,ed.relation,min(ev.timestamp) AS first_seen FROM edges ed JOIN events ev ON ev.artifact_id=ed.artifact_id AND ev.line=ed.line WHERE ed.case_id=? AND ed.source IN({placeholders}) AND ed.target IN({placeholders}) GROUP BY ed.source,ed.target,ed.relation", node_args)}
+        for row in self.rows(f"SELECT o.artifact_id,o.entity_id,min(ev.timestamp) AS first_seen FROM occurrences o JOIN events ev ON ev.artifact_id=o.artifact_id AND ev.line=o.line JOIN artifacts a ON a.id=o.artifact_id WHERE a.case_id=? AND o.artifact_id IN({placeholders}) AND o.entity_id IN({placeholders}) GROUP BY o.artifact_id,o.entity_id", node_args):
+            edge_times[(row["artifact_id"], row["entity_id"], "mentions")] = row["first_seen"]
         # Untimed evidence is always present in replay. It does not acquire an invented timestamp.
         for edge in edges:
             edge["first_seen"] = edge_times.get((edge["source"], edge["target"], edge["relation"]))

@@ -4,6 +4,8 @@
 
 Atlas preserves original bytes, extracts indicators, reconstructs event timelines and builds an interactive provenance graph. No cloud service, account, API key or runtime installation required in packaged builds. Windows and Linux, MIT.
 
+![Atlas relationship graph with source provenance](docs/screenshots/graph.png)
+
 ## Use
 
 Download the Windows installer or portable ZIP from [Releases](https://github.com/atlasru/unknown/releases). Linux builds include AppImage and a portable tar.gz. The first launch opens **NORTHSTAR / 017**, a complete synthetic investigation with reserved `.example` infrastructure and TEST-NET addresses.
@@ -22,6 +24,7 @@ Create a new investigation for your own files. Import multiple files, a folder, 
 - **Static analysis:** text, logs, JSONL, CSV, EML, PDF, binary ASCII/UTF-16 strings, PE headers/sections, nested ZIP members and encoded PowerShell commands.
 - **Entity normalization:** defanged IPv4, domains, URLs, emails, CVEs and hashes; source line, excerpt and character offset for each occurrence.
 - **Provenance graph:** observed DNS resolutions, URL hosts, email domains, file mentions and archive/decoding lineage. Barnes–Hut layout in a Web Worker, node dragging, pan/zoom, inspection and shortest-path tracing across the full stored graph.
+- **Event replay:** animate the graph from source timestamps without restarting the layout. Untimed context remains visible; replay does not invent event timestamps.
 - **Timeline:** ISO 8601 detection, UTC normalization, ordered events, date/content/type filters, one-click source inspection.
 - **Explainable signals:** encoded commands, download/execute patterns, credential/persistence/evasion references, disguised MZ/PE files, writable executable sections and low-variance periodic network activity.
 - **FTS5 queries:** text/phrase search plus `ext:`, `risk:`, `has:`, `name:` and `sha256:` filters.
@@ -79,3 +82,5 @@ Each import analyzes up to 3,000 files and 512 MiB of cumulative source/derived 
 The graph display caps the view at 1,000 files and 1,500 entities; search, timeline pagination, exports and path tracing use stored data. Integrity checks cover original bytes, evidence metadata and the audit hash chain. They are local checks, not an external digital signature or independent timestamp. A party with full write access can rebuild a local chain. Derived text and analyst decisions remain reviewable data.
 
 See [architecture](docs/ARCHITECTURE.md) for implementation details.
+
+See [validation](docs/VALIDATION.md) for measured performance and test coverage.

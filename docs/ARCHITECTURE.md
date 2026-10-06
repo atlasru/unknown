@@ -22,6 +22,8 @@ Indicators deduplicate within a case by type/canonical value. Occurrences preser
 
 A worker runs a deterministic Barnes–Hut quadtree approximation for repulsion and spring attraction for observed links. Typed-array snapshots transfer to the renderer. Canvas rendering handles inspection, neighbors, path highlighting and local camera interaction. Path search runs breadth-first over all stored case edges and returns the supporting source references.
 
+Event replay gates timed graph nodes and links by their first observed source timestamp while retaining the full layout. Untimed context remains visible. The overview chooses adaptive UTC time buckets spanning the complete event range, rather than silently discarding older or later activity.
+
 SQLite FTS5 handles safely quoted text/phrase terms. A small, explicit filter grammar generates parameterized SQL for extensions, names, hashes, entity types and open finding priorities.
 
 Periodicity analysis groups timestamped observations by file and destination. At least six distinct timestamps, intervals between 5 and 3,600 seconds and coefficient of variation no greater than 0.12 produce an explained heuristic finding. Scheduled benign traffic can satisfy the same rule.

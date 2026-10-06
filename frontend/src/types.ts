@@ -10,7 +10,7 @@ export interface GraphNode { id: string; label: string; kind: Kind; weight: numb
 export interface Edge { source: string; target: string; relation: string; weight: number; artifact_id: string; line: number; first_seen?: string | null }
 export interface GraphData { nodes: GraphNode[]; edges: Edge[]; total: number; truncated: boolean; time_range?: [string,string] | null }
 export interface TimelineEvent { id: number; artifact_id: string; timestamp: string; kind: string; line: number; summary: string; name: string }
-export interface Summary { case: Case; counts: Record<string, number>; severities: { severity: string; count: number }[]; types: { kind: Kind; count: number }[]; timeline: { time: string; count: number }[]; hubs: Entity[] }
+export interface Summary { case: Case; counts: Record<string, number>; severities: { severity: string; count: number }[]; types: { kind: Kind; count: number }[]; timeline: { time: string; count: number }[]; bucket_seconds: number; hubs: Entity[] }
 export interface Note { id: string; node_id: string; body: string; created: string; tag: string }
 export interface Audit { seq: number; timestamp: string; action: string; payload: string; prev: string; hash: string }
 export interface Job { id: string; case_id: string; status: string; imported: number; duplicates: number; skipped: number; processed: number; bytes: number; current: string; errors: string[]; cancelled: boolean; elapsed: number }

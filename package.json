@@ -79,7 +79,8 @@
         }
       ],
       "artifactName": "Atlas-${version}-windows-${arch}.${ext}",
-      "signAndEditExecutable": false
+      "signAndEditExecutable": true,
+      "icon": "build/icon.ico"
     },
     "nsis": {
       "oneClick": false,
@@ -105,7 +106,8 @@
       ],
       "category": "Utility",
       "artifactName": "Atlas-${version}-linux-${arch}.${ext}",
-      "executableName": "atlas"
+      "executableName": "atlas",
+      "icon": "build/icon.png"
     }
   }
 }

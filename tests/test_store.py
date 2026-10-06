@@ -116,3 +116,13 @@ def test_malformed_audit_payload_returns_failure_and_export_blocks(store, case, 
     with store.db: store.db.execute("UPDATE audit SET payload='{' WHERE action='evidence.imported'")
     assert not store.verify(case)['ok']
     with pytest.raises(ValueError, match='Integrity verification failed'): store.export(case, tmp_path / 'bad.zip')
+
+def test_summary_buckets_cover_all_events_over_long_period(store, case):
+    from datetime import datetime,timedelta,timezone
+    start=datetime(2026,10,1,tzinfo=timezone.utc)
+    text='\n'.join(f'{(start+timedelta(hours=i)).isoformat()} connect 192.0.2.1' for i in range(400))
+    add(store,case,'long.log',text)
+    summary=store.summary(case)
+    assert sum(b['count'] for b in summary['timeline']) == 400
+    assert len(summary['timeline']) <= 301
+    assert summary['bucket_seconds'] > 60

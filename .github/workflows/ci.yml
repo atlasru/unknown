@@ -55,6 +55,16 @@ jobs:
         run: python scripts/build_engine.py
       - name: Package desktop application
         run: npx electron-builder --publish never
+      - name: Verify packaged application (Linux)
+        if: runner.os == 'Linux'
+        env:
+          ATLAS_EXECUTABLE: ${{ github.workspace }}/release/linux-unpacked/atlas
+        run: xvfb-run -a npm run test:e2e
+      - name: Verify packaged application (Windows)
+        if: runner.os == 'Windows'
+        env:
+          ATLAS_EXECUTABLE: ${{ github.workspace }}\release\win-unpacked\Atlas.exe
+        run: npm run test:e2e
       - name: Upload ready-to-run applications
         uses: actions/upload-artifact@v4
         with:
@@ -75,3 +85,46 @@ jobs:
             test-results/
             playwright-report/
           if-no-files-found: ignore
+
+  release:
+    name: Publish verified Atlas release
+    needs: build
+    if: github.event_name == 'push' && startsWith(github.event.head_commit.message, 'release:')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: Atlas-*-1.0.0
+          path: artifacts
+          merge-multiple: true
+      - name: Independent verifier and checksums
+        run: |
+          cp scripts/verify_bundle.py artifacts/verify_bundle.py
+          python - <<'PY'
+          import hashlib
+          from pathlib import Path
+          folder=Path('artifacts')
+          lines=[]
+          for source in sorted(folder.iterdir()):
+              if not source.is_file():
+                  continue
+              digest=hashlib.sha256()
+              with source.open('rb') as stream:
+                  for block in iter(lambda:stream.read(1024*1024),b''):
+                      digest.update(block)
+              lines.append(f'{digest.hexdigest()}  {source.name}\n')
+          (folder/'SHA256SUMS.txt').write_text(''.join(lines))
+          PY
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.0
+          name: Atlas 1.0.0
+          target_commitish: ${{ github.sha }}
+          body_path: docs/RELEASE_NOTES.md
+          files: artifacts/*
+          fail_on_unmatched_files: true
+          draft: false
+          prerelease: false
