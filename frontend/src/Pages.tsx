@@ -50,6 +50,7 @@ export type PageProps = {
   navigate: (s: string) => void;
   notify: (s: string) => void;
   onImport?: (folder?: boolean) => void;
+  visible?: boolean;
   state?: Record<string, unknown>;
   onField?: (field: string, value: string | number) => void;
 };
@@ -76,11 +77,13 @@ export function Overview(props: PageProps) {
     `/cases/${props.caseId}/summary`,
     props.revision,
     props.onError,
+    props.visible !== false,
   );
   const { data: recent } = useData<{ items: Artifact[]; total: number }>(
     `/cases/${props.caseId}/artifacts?limit=6`,
     props.revision,
     props.onError,
+    props.visible !== false,
   );
   if (!data)
     return loading ? (
@@ -196,6 +199,7 @@ export function GraphPage(props: PageProps & { selection: Selection | null }) {
     `/cases/${props.caseId}/graph`,
     props.revision,
     props.onError,
+    props.visible !== false,
   );
   return (
     <div className="graph-page">
@@ -231,6 +235,7 @@ export function Evidence(props: PageProps) {
     `/cases/${props.caseId}/artifacts?q=${encodeURIComponent(query)}&limit=100&offset=${page * 100}`,
     props.revision,
     props.onError,
+    props.visible !== false,
   );
   return (
     <div className="page">
@@ -345,6 +350,7 @@ export function Entities(props: PageProps) {
     `/cases/${props.caseId}/entities?q=${encodeURIComponent(query)}&kind=${kind}&limit=200&offset=${page * 200}`,
     props.revision,
     props.onError,
+    props.visible !== false,
   );
   return (
     <div className="page">
@@ -459,6 +465,7 @@ export function Timeline(props: PageProps) {
     `/cases/${props.caseId}/events?q=${encodeURIComponent(query)}&kind=${kind}&start=${encodeURIComponent(start ? start + ':00.000+00:00' : '')}&end=${encodeURIComponent(end ? end + ':59.999+00:00' : '')}&limit=100&offset=${page * 100}`,
     props.revision,
     props.onError,
+    props.visible !== false,
   );
   return (
     <div className="page">
@@ -574,6 +581,7 @@ export function Findings(props: PageProps & { onUpdate: () => void }) {
     `/cases/${props.caseId}/findings`,
     props.revision,
     props.onError,
+    props.visible !== false,
   );
   const [severity, setSeverity] = useViewField<string>(props, 'severity', ''),
     [status, setStatus] = useViewField<string>(props, 'status', 'open');
@@ -675,6 +683,7 @@ export function Notebook(props: PageProps & { onUpdate: () => void }) {
     `/cases/${props.caseId}/notes`,
     props.revision,
     props.onError,
+    props.visible !== false,
   );
   const [body, setBody] = useViewField<string>(props, 'body', ''),
     [tag, setTag] = useViewField<string>(props, 'tag', 'hypothesis'),
@@ -748,6 +757,7 @@ export function IntegrityPage(props: PageProps & { onExport: () => void }) {
     `/cases/${props.caseId}/history`,
     props.revision,
     props.onError,
+    props.visible !== false,
   );
   const [result, setResult] = useState<Integrity | null>(null),
     [checking, setChecking] = useState(false);

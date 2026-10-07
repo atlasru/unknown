@@ -6,7 +6,7 @@ Atlas 1.1.0 verifies both the existing investigation engine and the new desktop 
 
 56 tests cover indicator normalization and source positions; UTF-8/UTF-16/binary strings; PDF text, background-child import and parser failure; malformed PE headers and writable executable sections; encoded command derivation without execution; DNS relationship provenance; CSV column boundaries; timestamp normalization; FTS filters; changed-source versions; case isolation; notes/review persistence; restart; byte, record and audit tampering; escaped reports; export completeness; ZIP path traversal, expansion limits and nesting depth; symlinks; cancellation; import concurrency; network periodicity; authenticated HTTP boundaries; graph replay timestamps and full-range temporal aggregation.
 
-Eleven workspace tests cover previews/pins, blank/reopened tabs, nested splits/pruning/moves, corrupt-state recovery, fuzzy search, Windows folders, source versions, archive lineage, imported-link resolution, Markdown AST/line offsets, and raw SHA-256 equality of every original engine/preload source. Two Node tests exercise deterministic Barnes–Hut convergence, finite positions, pin/unpin behavior, empty/single-node layouts and missing-edge handling.
+Eleven workspace tests cover previews/pins, blank/reopened tabs, nested splits/pruning/moves, corrupt-state recovery, fuzzy search, Windows folders, source versions, archive lineage, imported-link resolution, Markdown AST/line offsets, and raw SHA-256 equality of every original engine/preload source. Three read-queue regressions simulate a server connection limit, prove that every burst result arrives, recover capacity after a failure, and cancel closed-tab reads without overbooking active connections. Two Node tests exercise deterministic Barnes–Hut convergence, finite positions, pin/unpin behavior, empty/single-node layouts and missing-edge handling.
 
 ## Desktop behavior
 
@@ -21,7 +21,7 @@ Playwright drives the actual Electron application, first from source and then fr
 
 The packaged launch asserts `app.isPackaged` and application version 1.1.0. It uses the private frozen engine, not development Python. Production screenshots record the actual viewport, capture time, engine version, PNG SHA-256 and packaged `app.asar` SHA-256 in `docs/screenshots/production.json`. Source-mode screenshots go to a separate test output directory. The release gallery comes from the verified Linux CI application.
 
-All 56 engine tests, 13 graph/workspace tests, six source-desktop scenarios, six packaged-desktop scenarios and the frozen PDF probe passed locally. CI publishes only after the complete Windows and Linux pipelines, including both desktop passes, succeed. Diagnostic artifacts preserve screenshots and failure traces.
+All 56 engine tests, 16 graph/workspace/read-queue tests, six source-desktop scenarios, six packaged-desktop scenarios and the frozen PDF probe passed locally. CI publishes only after the complete Windows and Linux pipelines, including both desktop passes, succeed. Diagnostic artifacts preserve screenshots and failure traces.
 
 An additional frozen-engine probe generates a valid PDF, imports it through the authenticated API, verifies text/indicator extraction in the isolated compiled child process, checks original byte preservation and verifies clean shutdown. It runs on both Windows and Linux after sidecar packaging.
 

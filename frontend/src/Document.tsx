@@ -18,7 +18,7 @@ import type { Tab } from './workspace';
 import { resolveNote } from './fileTree';
 import { markdownParts, outline } from './markdown';
 import { Modal } from './Chrome';
-import { bytes, date, KindBadge, Loading, useData } from './shared';
+import { bytes, date, KindBadge, Loading, readAPI, useData } from './shared';
 
 const MarkdownReader = lazy(() => import('./MarkdownReader'));
 export function EvidenceDocument({
@@ -27,6 +27,7 @@ export function EvidenceDocument({
   revision,
   files,
   active,
+  visible,
   onOpen,
   onError,
   notify,
@@ -39,6 +40,7 @@ export function EvidenceDocument({
   revision: number;
   files: Artifact[];
   active: boolean;
+  visible: boolean;
   onOpen: (s: Selection, newTab?: boolean) => void;
   onError: (s: string) => void;
   notify: (s: string) => void;
@@ -52,6 +54,7 @@ export function EvidenceDocument({
     `/cases/${caseId}/${kind}/${resource}`,
     revision,
     onError,
+    visible,
   );
   const [mode, setMode] = useState(
       typeof tab.state.mode === 'string' &&
@@ -149,9 +152,7 @@ export function EvidenceDocument({
     try {
       let line: number | undefined;
       if (heading) {
-        const detail = await window.atlas.api<ArtifactDetail>(
-          `/cases/${caseId}/artifacts/${file.id}`,
-        );
+        const detail = await readAPI<ArtifactDetail>(`/cases/${caseId}/artifacts/${file.id}`);
         let title = heading;
         try {
           title = decodeURIComponent(title);

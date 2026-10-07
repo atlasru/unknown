@@ -8,6 +8,6 @@ The existing Obsidian folder importer is preserved. Imported Markdown now has a 
 
 Download the Windows **setup.exe**, or extract the Windows **ZIP** and run `Atlas.exe`. Linux: AppImage or portable tar.gz. Python and Node.js are not required. First launch opens **NORTHSTAR / 017**, the synthetic investigation.
 
-Both Windows and Linux must pass 56 engine/API tests, 13 graph/workspace tests, formatting/build checks, six source-desktop scenarios, the frozen PDF subprocess probe, and the same six scenarios against packaged production applications before this release can publish.
+Both Windows and Linux must pass 56 engine/API tests, 16 graph/workspace/read-queue tests, formatting/build checks, six source-desktop scenarios, the frozen PDF subprocess probe, and the same six scenarios against packaged production applications before this release can publish.
 
 The production screenshot gallery contains actual captures from the verified packaged Linux application and capture/hash metadata. `SHA256SUMS.txt` covers all release assets. `verify_bundle.py` independently verifies exported investigations using Python's standard library.

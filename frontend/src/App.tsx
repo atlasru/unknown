@@ -75,7 +75,7 @@ import {
   type ViewId,
   type Workspace,
 } from './workspace';
-import { bytes, useData } from './shared';
+import { bytes, readAPI, useData } from './shared';
 
 export function App() {
   const [cases, setCases] = useState<Case[]>([]),
@@ -104,16 +104,14 @@ export function App() {
   }, []);
   const update = useCallback(() => setRevision((r) => r + 1), []);
   useEffect(() => {
-    window.atlas
-      .api<Case[]>('/cases')
+    readAPI<Case[]>('/cases')
       .then((items) => {
         setCases(items);
         const saved = localStorage.getItem('atlas-case');
         setCaseId(items.find((c) => c.id === saved)?.id || items[0]?.id || '');
       })
       .catch((e) => onError(e.message));
-    window.atlas
-      .api<Job[]>('/jobs')
+    readAPI<Job[]>('/jobs')
       .then((items) => {
         for (const item of items) if (item.status !== 'running') completed.current.add(item.id);
       })
@@ -127,7 +125,7 @@ export function App() {
     let live = true;
     const timer = setInterval(async () => {
       try {
-        const items = await window.atlas.api<Job[]>('/jobs');
+        const items = await readAPI<Job[]>('/jobs');
         if (!live) return;
         setJob(items.find((j) => j.status === 'running') || items.at(-1) || null);
         for (const item of items.filter((j) => j.status !== 'running'))
@@ -174,7 +172,7 @@ export function App() {
     setCreating(true);
     try {
       const created = await window.atlas.api<Case>('/cases', 'POST', { name, description });
-      setCases(await window.atlas.api<Case[]>('/cases'));
+      setCases(await readAPI<Case[]>('/cases'));
       setCaseId(created.id);
       setCreateOpen(false);
       setName('');
@@ -824,7 +822,7 @@ function CaseWorkspace(props: CaseWorkspaceProps) {
     document.addEventListener('keydown', key);
     return () => document.removeEventListener('keydown', key);
   }, [palette, menu, running, props.onImport]);
-  function renderTab(t: Tab, paneId: string, isActive: boolean) {
+  function renderTab(t: Tab, paneId: string, isActive: boolean, visible: boolean) {
     const pageProps: PageProps = {
       caseId: current.id,
       revision,
@@ -834,6 +832,7 @@ function CaseWorkspace(props: CaseWorkspaceProps) {
       navigate: (view) => navigate(view as ViewId, false, paneId),
       onImport: props.onImport,
       state: t.state,
+      visible,
       onField: (field, value) =>
         setWorkspace((s) => {
           const latest = leaves(s.root)
@@ -852,6 +851,7 @@ function CaseWorkspace(props: CaseWorkspaceProps) {
           revision={revision}
           files={files}
           active={isActive}
+          visible={visible}
           onOpen={(value, newTab) => select(value, paneId, newTab)}
           onError={onError}
           notify={notify}

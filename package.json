@@ -12,9 +12,9 @@
     "test:layout": "node --test tests/layout.test.cjs",
     "package": "npm run build && electron-builder --publish never",
     "engine:build": "python3 scripts/build_engine.py",
-    "test:workspace": "node --test tests/workspace.test.cjs",
+    "test:workspace": "node --test tests/workspace.test.cjs tests/readQueue.test.cjs",
     "test:ui": "npm run test:layout && npm run test:workspace",
-    "format:check": "prettier --check \"frontend/src/**/*.{ts,tsx,css}\" \"tests/e2e/*.ts\" tests/workspace.test.cjs vite.config.mjs playwright.config.ts"
+    "format:check": "prettier --check \"frontend/src/**/*.{ts,tsx,css}\" \"tests/e2e/*.ts\" tests/workspace.test.cjs tests/readQueue.test.cjs vite.config.mjs playwright.config.ts"
   },
   "repository": {
     "type": "git",

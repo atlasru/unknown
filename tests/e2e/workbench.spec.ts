@@ -87,6 +87,22 @@ async function api<T = any>(
     { resource, method, data },
   ) as Promise<T>;
 }
+async function watchAlerts(page: Page) {
+  await page.evaluate(() => {
+    const messages: string[] = [];
+    (globalThis as any).__atlasAlerts = messages;
+    const observer = new MutationObserver(() => {
+      for (const alert of document.querySelectorAll('[role=alert]')) {
+        const message = alert.textContent || '';
+        if (message && !messages.includes(message)) messages.push(message);
+      }
+    });
+    observer.observe(document.body, { subtree: true, childList: true, characterData: true });
+  });
+}
+async function expectNoAlerts(page: Page) {
+  expect(await page.evaluate(() => (globalThis as any).__atlasAlerts || [])).toEqual([]);
+}
 async function shot(page: Page, name: string) {
   const folder = process.env.ATLAS_EXECUTABLE ? 'docs/screenshots' : 'test-results/ui';
   fs.mkdirSync(folder, { recursive: true });
@@ -128,6 +144,7 @@ test('complete 1.0 investigation: graph, provenance, queries, timeline, reviews,
   let app = await h.launch();
   try {
     let page = await app.firstWindow();
+    await watchAlerts(page);
     const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(e.message));
     await expect(body(page).getByRole('heading', { name: 'Overview', exact: true })).toBeVisible();
@@ -240,6 +257,7 @@ test('complete 1.0 investigation: graph, provenance, queries, timeline, reviews,
     await body(page).getByRole('textbox').fill('e2e.example');
     await expect(body(page).locator('tbody')).toContainText('e2e.example');
     expect(errors).toEqual([]);
+    await expectNoAlerts(page);
     await app.close();
     app = await h.launch();
     page = await app.firstWindow();
@@ -420,6 +438,7 @@ test('Obsidian vault import: nested Markdown, wikilinks, aliases, relative links
   let app = await h.launch();
   try {
     let page = await app.firstWindow();
+    await watchAlerts(page);
     const requests: string[] = [];
     page.on('request', (r) => {
       if (/^https?:/.test(r.url())) requests.push(r.url());
@@ -499,6 +518,7 @@ test('Obsidian vault import: nested Markdown, wikilinks, aliases, relative links
     verifyBundle(h.exported);
     const integrity = await api(page, `/cases/${caseId}/verify`, 'POST');
     expect(integrity.ok).toBe(true);
+    await expectNoAlerts(page);
     const before = await api(page, `/cases/${caseId}/summary`);
     await app.close();
     app = await h.launch();

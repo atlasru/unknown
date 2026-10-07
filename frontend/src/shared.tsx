@@ -13,21 +13,42 @@ import {
 } from 'lucide-react';
 import type { Kind } from './types';
 import { COLORS, KIND_LABELS } from './Graph';
+import { createReadQueue } from './readQueue';
 
-export function useData<T>(path: string, revision: number, onError: (s: string) => void) {
+const enqueueRead = createReadQueue(2);
+export function readAPI<T>(path: string, signal?: AbortSignal): Promise<T> {
+  return enqueueRead(async () => {
+    for (let attempt = 0; ; attempt++) {
+      try {
+        return await window.atlas.api<T>(path);
+      } catch (error) {
+        if (attempt || !/TypeError:\s*fetch failed/i.test((error as Error).message)) throw error;
+        if (signal?.aborted) throw signal.reason;
+        await new Promise((resolve) => setTimeout(resolve, 80));
+      }
+    }
+  }, signal);
+}
+
+export function useData<T>(
+  path: string,
+  revision: number,
+  onError: (s: string) => void,
+  enabled = true,
+) {
   const [resolved, setResolved] = useState<{ path: string; value: T } | null>(null),
     [loading, setLoading] = useState(true);
   useEffect(() => {
+    if (!enabled) return;
     let live = true;
+    const abort = new AbortController();
     setLoading(true);
-    window.atlas
-      .api<T>(path)
+    readAPI<T>(path, abort.signal)
       .then((value) => {
         if (live) setResolved({ path, value });
       })
       .catch((error) => {
         if (live) {
-          setResolved(null);
           onError(error.message);
         }
       })
@@ -36,8 +57,9 @@ export function useData<T>(path: string, revision: number, onError: (s: string) 
       });
     return () => {
       live = false;
+      abort.abort();
     };
-  }, [path, revision, onError]);
+  }, [path, revision, onError, enabled]);
   return { data: resolved?.path === path ? resolved.value : null, loading };
 }
 export const bytes = (n: number) =>

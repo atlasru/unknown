@@ -18,20 +18,22 @@ import type { Artifact, Case } from './types';
 import { ancestors, buildTree, flattenTree, type TreeNode } from './fileTree';
 import { EntryIcon } from './Chrome';
 import { viewEntry, VIEWS, type OpenMode, type ViewId, type Workspace } from './workspace';
-import { bytes, useData } from './shared';
+import { bytes, readAPI, useData } from './shared';
 
 export function useFiles(caseId: string, revision: number, onError: (s: string) => void) {
   const [value, setValue] = useState<{ caseId: string; files: Artifact[] } | null>(null),
     [loading, setLoading] = useState(true);
   useEffect(() => {
     let live = true;
+    const abort = new AbortController();
     setLoading(true);
     (async () => {
       const files: Artifact[] = [];
       let total = 1;
       for (let offset = 0; offset < total; offset += 500) {
-        const batch = await window.atlas.api<{ items: Artifact[]; total: number }>(
+        const batch = await readAPI<{ items: Artifact[]; total: number }>(
           `/cases/${caseId}/artifacts?limit=500&offset=${offset}`,
+          abort.signal,
         );
         if (!live) return;
         total = batch.total;
@@ -48,6 +50,7 @@ export function useFiles(caseId: string, revision: number, onError: (s: string) 
       });
     return () => {
       live = false;
+      abort.abort();
     };
   }, [caseId, revision, onError]);
   return { files: value?.caseId === caseId ? value.files : [], loading };

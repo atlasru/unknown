@@ -406,7 +406,7 @@ export function PaneLayout({
   node: Layout;
   workspace: Workspace;
   actions: PaneActions;
-  render: (tab: Tab, pane: string, active: boolean) => React.ReactNode;
+  render: (tab: Tab, pane: string, active: boolean, visible: boolean) => React.ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   if (node.type === 'split')
@@ -441,7 +441,7 @@ function Pane({
   node: Leaf;
   active: boolean;
   actions: PaneActions;
-  render: (tab: Tab, pane: string, active: boolean) => React.ReactNode;
+  render: (tab: Tab, pane: string, active: boolean, visible: boolean) => React.ReactNode;
 }) {
   const [zone, setZone] = useState('');
   const read = (e: React.DragEvent) => {
@@ -626,7 +626,7 @@ function Pane({
             }
             hidden={node.active !== tab.id}
           >
-            {render(tab, node.id, active && node.active === tab.id)}
+            {render(tab, node.id, active && node.active === tab.id, node.active === tab.id)}
           </div>
         ))}
         {!node.tabs.length && (
