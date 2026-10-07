@@ -145,7 +145,7 @@ app.whenReady().then(async () => {
   try {
     await startEngine();
     window = new BrowserWindow({
-      width: 1480, height: 960, minWidth: 1050, minHeight: 700, backgroundColor: '#10151f', frame: false, show: false,
+      width: 1480, height: 960, minWidth: 1050, minHeight: 700, backgroundColor: '#1e1e1e', frame: false, show: false,
       icon: path.join(root, 'build', 'icon.png'),
       webPreferences: { preload: path.join(__dirname, 'preload.cjs'), nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: true },
     });

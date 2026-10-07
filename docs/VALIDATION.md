@@ -1,28 +1,27 @@
 # Validation
 
-Atlas 1.0.0 uses behavioral tests and a complete desktop investigation scenario.
+Atlas 1.1.0 verifies both the existing investigation engine and the new desktop workspace.
 
 ## Engine and API
 
 56 tests cover indicator normalization and source positions; UTF-8/UTF-16/binary strings; PDF text, background-child import and parser failure; malformed PE headers and writable executable sections; encoded command derivation without execution; DNS relationship provenance; CSV column boundaries; timestamp normalization; FTS filters; changed-source versions; case isolation; notes/review persistence; restart; byte, record and audit tampering; escaped reports; export completeness; ZIP path traversal, expansion limits and nesting depth; symlinks; cancellation; import concurrency; network periodicity; authenticated HTTP boundaries; graph replay timestamps and full-range temporal aggregation.
 
-Two Node tests exercise deterministic Barnes–Hut convergence, finite positions, pin/unpin behavior, empty/single-node layouts and missing-edge handling.
+Eleven workspace tests cover previews/pins, blank/reopened tabs, nested splits/pruning/moves, corrupt-state recovery, fuzzy search, Windows folders, source versions, archive lineage, imported-link resolution, Markdown AST/line offsets, and raw SHA-256 equality of every original engine/preload source. Two Node tests exercise deterministic Barnes–Hut convergence, finite positions, pin/unpin behavior, empty/single-node layouts and missing-edge handling.
 
 ## Desktop behavior
 
-Playwright drives the actual Electron application, first from source and then from the unpacked packaged executable. The same scenario runs in Windows and Linux CI:
+Playwright drives the actual Electron application, first from source and then from the unpacked production executable. Both Windows and Linux CI run six scenarios:
 
-1. Launch into the synthetic investigation and verify the corpus count.
-2. Play/pause graph replay; select a domain; follow provenance into a highlighted source line.
-3. Query decoded commands and inspect their content.
-4. Filter authentication events and jump to a source line.
-5. Mark a finding reviewed and confirm it moves into the reviewed filter.
-6. Append an analyst conclusion, verify integrity and export a complete bundle.
-7. Import an additional local file and confirm it appears in the vault.
-8. Create an isolated empty case, switch back and use the command palette.
-9. Restart and confirm the imported entities, selected page and notes persist.
+1. All original investigation flows: graph replay/path, exact provenance/hex/observations, FTS, timeline filters, review/dismiss/reopen, notebook, integrity/history/export, independent bundle verification, native import, cases and restart.
+2. Keyboard workspace: Russian-layout shortcuts, previews/pins, new/cycle/close/reopen, nested splits/resizing, focus, context menus/real clipboard, sidebar search, per-case layout persistence and 1280 × 800 fit.
+3. Obsidian folder import: nested Markdown/config/attachments, frontmatter, aliases/wikilinks/relative/heading links, GFM, exact original hashes/text, HTML/network exclusion, duplicate import, changed-source versions, export and restart.
+4. Real mouse drag and drop: reorder, pinned-tab transfer, split at the requested edge and tree-file edge drop.
+5. A 601-file vault: API pagination beyond 500, virtual tree keyboard navigation, 620-line source paging/jumps and full-source find.
+6. Atlas 1.0 migration: existing hashes, notes, findings, history and counts remain unchanged after legacy preference migration and corrupted-layout fallback.
 
-The packaged pass uses the private frozen engine, not the development Python interpreter. CI publishes binaries only after both platform jobs, including these packaged passes, succeed. Screenshots and failure traces are uploaded as workflow artifacts.
+The packaged launch asserts `app.isPackaged` and application version 1.1.0. It uses the private frozen engine, not development Python. Production screenshots record the actual viewport, capture time, engine version, PNG SHA-256 and packaged `app.asar` SHA-256 in `docs/screenshots/production.json`. Source-mode screenshots go to a separate test output directory. The release gallery comes from the verified Linux CI application.
+
+All 56 engine tests, 13 graph/workspace tests, six source-desktop scenarios, six packaged-desktop scenarios and the frozen PDF probe passed locally. CI publishes only after the complete Windows and Linux pipelines, including both desktop passes, succeed. Diagnostic artifacts preserve screenshots and failure traces.
 
 An additional frozen-engine probe generates a valid PDF, imports it through the authenticated API, verifies text/indicator extraction in the isolated compiled child process, checks original byte preservation and verifies clean shutdown. It runs on both Windows and Linux after sidecar packaging.
 

@@ -8,6 +8,12 @@ Atlas is a desktop application with three isolated layers.
 | Desktop host | Electron main / context-isolated preload | Dialogs, clipboard, process lifetime and constrained IPC |
 | Analysis engine | Python / SQLite FTS5 / pypdf | Preservation, parsing, indexing, correlation, provenance and export |
 
+## Renderer workspace
+
+Atlas 1.1 replaces page-level navigation with a persistent per-case binary split tree and tab groups. Each tab owns its filters, drafts and document mode; moving or splitting it preserves that state. A virtualized file explorer and fuzzy palettes open evidence or existing investigation tools in any group. A collapsible selection inspector follows the active group. Safe, lazy Markdown reading resolves imported sources and retains original-line provenance. See [workspace architecture and interaction mapping](WORKSPACE.md).
+
+Every `engine/**` source file and `electron/preload.cjs` remain byte-for-byte equal to release commit `4a28959da0c9c4ba44fa953c732fc68770d7a7a7`, enforced by a SHA-256 fixture test. The host changes only its startup background color. Application version is 1.1.0; the unchanged engine health protocol continues to report 1.0.0. Database schema, application identity, user-data location, authenticated API, import, analysis and export remain unchanged.
+
 ## Evidence flow
 
 An import records bounded original bytes under `evidence/<hash-prefix>/<sha256>`, with temporary-file write, fsync and atomic replacement. SQLite transactions atomically insert artifact metadata, extracted text, entities, occurrences, observed relationships, events, findings and the corresponding audit record. A case/path/hash uniqueness constraint makes repeat imports idempotent. Changed bytes at a known path produce an additional version.

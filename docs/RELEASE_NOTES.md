@@ -1,16 +1,13 @@
-Atlas 1.0.0 — a complete local evidence workbench for Windows and Linux.
+Atlas 1.1.0 — the file-first desktop workspace.
 
-Download the Windows **setup.exe** for installation, or extract the Windows **ZIP** and run `Atlas.exe`. Linux: AppImage or portable tar.gz. Packaged applications include their analysis engine; Python and Node.js are not required.
+The interface has been rebuilt around Obsidian-style navigation: a narrow ribbon, hierarchical file explorer, temporary previews, pinned tabs, nested split groups, resizable/collapsible sidebars, fuzzy command/file palettes, context menus, keyboard focus navigation and a quiet status bar. Tabs can be reordered, moved and split with real drag and drop. Layouts and tab state persist separately for each investigation.
 
-The first launch opens **NORTHSTAR / 017**, a synthetic investigation ready to explore.
+Overview is now a compact case briefing. Every Atlas 1.0 investigation capability remains accessible in a tab: graph/replay/path tracing, FTS queries, entity index, timeline, findings and review decisions, notebook, exact source/hex/provenance, integrity/history and complete exports.
 
-- Preserved original bytes, SHA-256 evidence storage, source versions and integrity verification.
-- Text/log/JSONL/CSV/EML/PDF, executable strings, PE metadata, nested ZIPs and encoded-command analysis.
-- Interactive provenance graph with worker-based Barnes–Hut layout, path tracing and event replay.
-- Full-text queries, UTC timeline, explained heuristic findings, notes and review decisions.
-- Portable evidence bundles with complete JSON, original bytes and an HTML report.
-- Sandboxed local desktop UI and authenticated private engine.
+The existing Obsidian folder importer is preserved. Imported Markdown now has a safe reading view with frontmatter, GFM, wikilinks/aliases, relative/heading links, outline and attachment navigation. Deduplication, source versions, original bytes/hashes and audited investigations remain compatible. The analysis engine and sandbox preload are byte-for-byte unchanged from 1.0; only the desktop host startup background changes.
 
-Both Windows and Linux builds run engine/API tests, layout tests and the complete investigation scenario against source and packaged applications before release. `SHA256SUMS.txt` lists asset checksums. `verify_bundle.py` independently verifies exported investigations using Python's standard library.
+Download the Windows **setup.exe**, or extract the Windows **ZIP** and run `Atlas.exe`. Linux: AppImage or portable tar.gz. Python and Node.js are not required. First launch opens **NORTHSTAR / 017**, the synthetic investigation.
 
-Atlas performs static analysis and does not contact extracted infrastructure. Findings support analyst review; they are not malware verdicts. Read the repository's field guide and documented analysis limits.
+Both Windows and Linux must pass 56 engine/API tests, 13 graph/workspace tests, formatting/build checks, six source-desktop scenarios, the frozen PDF subprocess probe, and the same six scenarios against packaged production applications before this release can publish.
+
+The production screenshot gallery contains actual captures from the verified packaged Linux application and capture/hash metadata. `SHA256SUMS.txt` covers all release assets. `verify_bundle.py` independently verifies exported investigations using Python's standard library.

@@ -1,6 +1,6 @@
 {
   "name": "atlas-workbench",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Local evidence analysis, provenance graphs and temporal investigation",
   "main": "electron/main.cjs",
   "scripts": {
@@ -11,7 +11,10 @@
     "test:e2e": "playwright test",
     "test:layout": "node --test tests/layout.test.cjs",
     "package": "npm run build && electron-builder --publish never",
-    "engine:build": "python3 scripts/build_engine.py"
+    "engine:build": "python3 scripts/build_engine.py",
+    "test:workspace": "node --test tests/workspace.test.cjs",
+    "test:ui": "npm run test:layout && npm run test:workspace",
+    "format:check": "prettier --check \"frontend/src/**/*.{ts,tsx,css}\" \"tests/e2e/*.ts\" tests/workspace.test.cjs vite.config.mjs playwright.config.ts"
   },
   "repository": {
     "type": "git",
@@ -28,7 +31,9 @@
   "dependencies": {
     "lucide-react": "1.52.0",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "react-markdown": "10.1.0",
+    "remark-gfm": "4.0.1"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
@@ -38,6 +43,7 @@
     "concurrently": "10.0.5",
     "electron": "44.5.1",
     "electron-builder": "26.15.3",
+    "prettier": "3.6.2",
     "typescript": "7.0.2",
     "vite": "8.3.3",
     "wait-on": "9.5.1"

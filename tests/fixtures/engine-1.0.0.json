@@ -1,0 +1,15 @@
+{
+  "sourceVersion": "1.0.0",
+  "sourceCommit": "4a28959da0c9c4ba44fa953c732fc68770d7a7a7",
+  "sha256": {
+    "electron/preload.cjs": "91700d1ba5828ea97aa96a702a43d2235cdab757fc9d7404b26457008b59fa97",
+    "engine/atlas/__init__.py": "76f9b5a495f1c3de66f826f436b74be31c2045487a1108c40eb3c6cafcc10979",
+    "engine/atlas/analyze.py": "65d69efe0c693ed1e46525c77140bd611c4c3c8cf6d98a7d4d4caa51e9bf9ffe",
+    "engine/atlas/demo.py": "512c0f0fbbb9464b290e3e7ffa5049f3ac9386c6db3903051cc08c7773024481",
+    "engine/atlas/importer.py": "91f7bda6eb8272a89438c703fd1432c4a5438e5fcec56f767f672571787a0f87",
+    "engine/atlas/pdf_worker.py": "ee75c8cd61e907f12d8692d385d70b203c4977f72cb7c76d1343650ad5b1491b",
+    "engine/atlas/server.py": "94918d8f7560f05dfa6e420824136b62a524bacf7a56cd895ec851e6602fb82a",
+    "engine/atlas/store.py": "c45da074d8b01652adb391edeb9c70ec52e4d2789b0429eb6d4b7296362eb02e",
+    "engine/launch.py": "cefcee764ab1c4d464b3aef7fdb35f0a15f957864916f5ac02c6f20867e9ebd7"
+  }
+}

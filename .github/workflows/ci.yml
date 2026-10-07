@@ -39,8 +39,10 @@ jobs:
       - run: python -m pip install -r requirements-dev.txt
       - name: Analysis and API tests
         run: python -m pytest -q
-      - name: Graph algorithm tests
-        run: npm run test:layout
+      - name: Graph and workspace model tests
+        run: npm run test:ui
+      - name: Formatting
+        run: npm run format:check
       - name: Renderer and application icons
         run: |
           npm run build
@@ -70,7 +72,7 @@ jobs:
       - name: Upload ready-to-run applications
         uses: actions/upload-artifact@v4
         with:
-          name: Atlas-${{ runner.os }}-1.0.0
+          name: Atlas-application-${{ runner.os }}
           path: |
             release/*.exe
             release/*.zip
@@ -99,9 +101,19 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          pattern: Atlas-*-1.0.0
+          pattern: Atlas-application-*
           path: artifacts
           merge-multiple: true
+      - name: Release version
+        id: version
+        run: echo "value=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Download production captures from the verified Linux application
+        uses: actions/download-artifact@v4
+        with:
+          name: Atlas-verification-Linux
+          path: verification
+      - name: Production screenshot gallery
+        run: zip -j artifacts/Atlas-${{ steps.version.outputs.value }}-production-screenshots.zip verification/docs/screenshots/*.png verification/docs/screenshots/production.json
       - name: Independent verifier and checksums
         run: |
           cp scripts/verify_bundle.py artifacts/verify_bundle.py
@@ -122,8 +134,8 @@ jobs:
           PY
       - uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.0
-          name: Atlas 1.0.0
+          tag_name: v${{ steps.version.outputs.value }}
+          name: Atlas ${{ steps.version.outputs.value }}
           target_commitish: ${{ github.sha }}
           body_path: docs/RELEASE_NOTES.md
           files: artifacts/*

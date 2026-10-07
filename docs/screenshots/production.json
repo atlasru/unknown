@@ -1,0 +1,86 @@
+{
+  "screenshots": {
+    "overview": {
+      "file": "overview.png",
+      "width": 1480,
+      "height": 960,
+      "devicePixelRatio": 1,
+      "sha256": "48a8aec8d2ee299f15e3c63da8ac4fad75a7076527a6dcf7b8d80c0aa5669e29",
+      "engineVersion": "1.0.0",
+      "capturedAt": "2026-10-07T17:21:32.056Z"
+    },
+    "graph": {
+      "file": "graph.png",
+      "width": 1480,
+      "height": 960,
+      "devicePixelRatio": 1,
+      "sha256": "be8d5be1388746ddc1862cd74f7ab56e21126235b3055ba88d439418926ae9de",
+      "engineVersion": "1.0.0",
+      "capturedAt": "2026-10-07T17:21:34.144Z"
+    },
+    "timeline": {
+      "file": "timeline.png",
+      "width": 1480,
+      "height": 960,
+      "devicePixelRatio": 1,
+      "sha256": "f8f0dc0da80c290775ae156debbd1be92d7a6889693c8e9673728b65a9eb96d0",
+      "engineVersion": "1.0.0",
+      "capturedAt": "2026-10-07T17:21:34.922Z"
+    },
+    "markdown": {
+      "file": "markdown.png",
+      "width": 1480,
+      "height": 960,
+      "devicePixelRatio": 1,
+      "sha256": "f1156d04ea64079fd6b6ff2eb16079e8cc21e8a0bd2ab34d1a975f96f6f3ca59",
+      "engineVersion": "1.0.0",
+      "capturedAt": "2026-10-07T17:21:39.789Z"
+    },
+    "split-workspace": {
+      "file": "split-workspace.png",
+      "width": 1480,
+      "height": 960,
+      "devicePixelRatio": 1,
+      "sha256": "ee7712e50671cf18903d13c3a989af59a3eda20c6e601c54867af5cc7ce53c64",
+      "engineVersion": "1.0.0",
+      "capturedAt": "2026-10-07T17:21:42.906Z"
+    },
+    "context-menu": {
+      "file": "context-menu.png",
+      "width": 1480,
+      "height": 960,
+      "devicePixelRatio": 1,
+      "sha256": "548c298a5d6054e2da514a5073985b7bcd6a6aeca054329414196c30a27e3061",
+      "engineVersion": "1.0.0",
+      "capturedAt": "2026-10-07T17:21:43.064Z"
+    },
+    "command-palette": {
+      "file": "command-palette.png",
+      "width": 1480,
+      "height": 960,
+      "devicePixelRatio": 1,
+      "sha256": "c438e2ba7b1cf45e8a6edaf685a1ae8ff866abe79ff19ffe3f0d8c0d82503d1e",
+      "engineVersion": "1.0.0",
+      "capturedAt": "2026-10-07T17:21:43.430Z"
+    },
+    "obsidian-vault": {
+      "file": "obsidian-vault.png",
+      "width": 1480,
+      "height": 960,
+      "devicePixelRatio": 1,
+      "sha256": "3f7616d26d16f44bcbbd622eb9d51da922e44645e94f044abb0b3a1a15ac711d",
+      "engineVersion": "1.0.0",
+      "capturedAt": "2026-10-07T17:21:47.487Z"
+    }
+  },
+  "version": "1.1.0",
+  "packaged": true,
+  "platform": "linux",
+  "executable": "atlas",
+  "asarSha256": "eca70824ea7489343cf4bf9972ffd49f2c476afbe0fcc8d6b8734ce22c80875f",
+  "captureMethod": "Playwright Electron against the packaged executable and frozen engine",
+  "nominalWindow": {
+    "width": 1480,
+    "height": 960
+  }
+}

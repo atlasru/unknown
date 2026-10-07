@@ -1,14 +1,14 @@
 # Atlas
 
-**A local evidence workbench. Turn files into a connected, inspectable investigation.**
+**Atlas 1.1.0 — a local evidence workbench with an Obsidian-style desktop workspace.**
 
 Atlas preserves original bytes, extracts indicators, reconstructs event timelines and builds an interactive provenance graph. No cloud service, account, API key or runtime installation required in packaged builds. Windows and Linux, MIT.
 
-![Atlas relationship graph with source provenance](docs/screenshots/graph.png)
+![Atlas 1.1 production workspace: Markdown, split graph and outline](docs/screenshots/split-workspace.png)
 
 ## Use
 
-Download the Windows installer or portable ZIP from [Releases](https://github.com/atlasru/unknown/releases). Linux builds include AppImage and a portable tar.gz. The first launch opens **NORTHSTAR / 017**, a complete synthetic investigation with reserved `.example` infrastructure and TEST-NET addresses.
+Download the Windows installer or portable ZIP from [Atlas 1.1.0](https://github.com/atlasru/unknown/releases/tag/v1.1.0). Linux builds include AppImage and a portable tar.gz. The first launch opens **NORTHSTAR / 017**, a complete synthetic investigation with reserved `.example` infrastructure and TEST-NET addresses.
 
 1. Open **Evidence graph**, select `cdn.northstar.example`, then follow a source mention.
 2. Search **Evidence vault** for `name:decoded` to inspect the decoded PowerShell command.
@@ -17,6 +17,14 @@ Download the Windows installer or portable ZIP from [Releases](https://github.co
 5. Verify original bytes and the history chain, then export an independent evidence bundle.
 
 Create a new investigation for your own files. Import multiple files, a folder, or drag sources into Atlas. Imported programs are never executed and extracted infrastructure is never contacted.
+
+## Workspace
+
+Browse a hierarchical file tree, open a temporary preview or pinned tab, drag tabs into nested splits, and collapse either sidebar. **Ctrl+O** opens a file; **Ctrl+P** runs any command; **Ctrl+Backslash** splits right; **Ctrl+Shift+Backslash** splits down. Properties, observed connections, outline and source observations follow the active pane. All original investigation tools remain available as tabs. Overview is a compact case briefing.
+
+Import an Obsidian folder with the existing importer. Read Markdown with frontmatter, wikilinks/aliases, relative and heading links, GFM tables/tasks, and imported attachments. Original bytes, hashes, versions and provenance are preserved. Source and hex inspection remain one click away. See the [workspace guide and full feature mapping](docs/WORKSPACE.md).
+
+The analysis engine and sandbox preload are byte-for-byte unchanged from Atlas 1.0. Application identity, database schema and existing case data remain compatible.
 
 ## Capabilities
 
@@ -55,7 +63,8 @@ npm run dev
 
 ```bash
 python -m pytest -q
-npm run test:layout
+npm run test:ui
+npm run format:check
 npm run build
 # Linux CI / a machine without a desktop:
 xvfb-run -a npm run test:e2e

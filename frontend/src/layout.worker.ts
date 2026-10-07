@@ -8,8 +8,12 @@ function tick() {
   self.postMessage({ positions: copy, iteration: layout.iteration }, [copy.buffer]);
   if (layout.iteration < 600) timer = setTimeout(tick, layout.positions.length > 4000 ? 60 : 25);
 }
-self.onmessage = event => {
+self.onmessage = (event) => {
   const message = event.data;
-  if (message.type === 'init') { clearTimeout(timer); layout = createLayout(message.nodes, message.edges); tick(); }
+  if (message.type === 'init') {
+    clearTimeout(timer);
+    layout = createLayout(message.nodes, message.edges);
+    tick();
+  }
   if (message.type === 'pin' && layout) layout.pin(message.id, message.x, message.y);
 };
